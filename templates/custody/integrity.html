@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Integrity check{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Integrity check</h1><p class="sub">Every chain is re-hashed from its first record each time this page loads.</p></div>
+</div>
+<div class="banner {% if bad %}bad{% else %}ok{% endif %}" role="status">
+  <i class="bi {% if bad %}bi-shield-exclamation{% else %}bi-shield-check{% endif %}"></i>
+  <div>
+    <strong>{% if bad %}{{ bad }} item{{ bad|pluralize }} failed verification{% else %}All evidence verified{% endif %}</strong>
+    <span>{{ rows|length }} item{{ rows|length|pluralize }} checked.</span>
+  </div>
+</div>
+<div class="panel">
+  {% if rows %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead><tr><th class="ps-3">Evidence</th><th>Case</th><th>Records</th><th>Chain</th><th>File</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="ps-3"><a class="mono" href="{% url 'evidence_detail' r.ev.pk %}">{{ r.ev.evidence_id }}</a><div class="small">{{ r.ev.name }}</div></td>
+          <td class="mono">{{ r.ev.case.case_number }}</td>
+          <td>{{ r.records }}</td>
+          <td>{% if r.ok %}<span class="chip chip-ok"><i class="bi bi-check2"></i>Intact</span>{% else %}<span class="chip chip-bad"><i class="bi bi-x"></i>Broken at record {{ r.broken_at }}</span>{% endif %}</td>
+          <td>{% if r.file_ok is None %}<span class="muted">No file</span>{% elif r.file_ok %}<span class="chip chip-ok"><i class="bi bi-check2"></i>Matches</span>{% else %}<span class="chip chip-bad"><i class="bi bi-x"></i>Mismatch</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty"><i class="bi bi-shield"></i>Nothing to verify yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

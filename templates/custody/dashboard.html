@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="sub">Hello {{ user.get_full_name|default:user.username }}. Here is where the evidence stands.</p>
+  </div>
+  {% if can_write %}
+  <div class="d-flex gap-2">
+    <a class="btn btn-line" href="{% url 'case_create' %}"><i class="bi bi-folder-plus me-1"></i>New case</a>
+    <a class="btn btn-tape" href="{% url 'evidence_create' %}"><i class="bi bi-plus-lg me-1"></i>Log evidence</a>
+  </div>
+  {% endif %}
+</div>
+
+<section class="ledger-strip mb-4">
+  <div>
+    {% if issues %}
+      <h2>{{ issues|length }} chain{{ issues|length|pluralize }} need{{ issues|length|pluralize:"s," }} review</h2>
+      <p>The hash check found records that no longer match. Open the red links to see which.</p>
+    {% elif total_evidence %}
+      <h2>Every custody chain checks out</h2>
+      <p>{{ total_logs }} records across {{ total_evidence }} item{{ total_evidence|pluralize }} were re-hashed just now.</p>
+    {% else %}
+      <h2>No evidence logged yet</h2>
+      <p>Log the first item to start a custody chain.</p>
+    {% endif %}
+  </div>
+  <div class="links" role="list" aria-label="One link per evidence item">
+    {% for h in health %}<a role="listitem" style="--i:{{ forloop.counter0 }}" class="lk {% if not h.ok %}bad{% endif %}" href="{% url 'evidence_detail' h.ev.pk %}" title="{{ h.ev.evidence_id }} - {{ h.ev.name }}"></a>{% endfor %}
+  </div>
+</section>
+
+<section class="stat-row mb-4">
+  <div class="stat-card c1"><span class="ic"><i class="bi bi-folder2-open"></i></span><div><div class="n">{{ open_cases }}</div><div class="l">Open cases ({{ total_cases }} total)</div></div></div>
+  <div class="stat-card c2"><span class="ic"><i class="bi bi-archive"></i></span><div><div class="n">{{ total_evidence }}</div><div class="l">Evidence items</div></div></div>
+  <div class="stat-card c3"><span class="ic"><i class="bi bi-shield-lock"></i></span><div><div class="n">{{ active_evidence }}</div><div class="l">Currently in custody</div></div></div>
+  <div class="stat-card c4"><span class="ic"><i class="bi bi-link-45deg"></i></span><div><div class="n">{{ total_logs }}</div><div class="l">Ledger records</div></div></div>
+</section>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <section class="panel h-100">
+      <div class="panel-head"><h2>Latest custody events</h2><a href="{% url 'evidence_list' %}" class="small">All evidence</a></div>
+      {% if recent_logs %}
+      <ul class="list-group list-group-flush">
+        {% for log in recent_logs %}
+        <li class="list-group-item d-flex gap-3 py-3">
+          <span class="node flex-shrink-0" style="width:38px;height:38px;font-size:1rem;"><i class="bi {{ log.icon }}"></i></span>
+          <div class="min-w-0">
+            <a class="fw-semibold text-decoration-none" href="{% url 'evidence_detail' log.evidence.pk %}">{{ log.get_action_display }}: {{ log.evidence.name }}</a>
+            <div class="muted small">
+              <span class="mono">{{ log.evidence.evidence_id }}</span> &middot;
+              {% if log.to_user %}to {{ log.to_user.get_full_name|default:log.to_user.username }}{% else %}by {{ log.recorded_by.get_full_name|default:log.recorded_by.username }}{% endif %}
+              &middot; {{ log.timestamp|timesince }} ago
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty"><i class="bi bi-clock-history"></i>No custody events yet.</div>
+      {% endif %}
+    </section>
+  </div>
+  <div class="col-lg-5">
+    <section class="panel h-100">
+      <div class="panel-head"><h2>With you now</h2></div>
+      {% if my_items %}
+      <ul class="list-group list-group-flush">
+        {% for ev in my_items %}
+        <li class="list-group-item d-flex justify-content-between align-items-center gap-2 py-3">
+          <a class="text-decoration-none" href="{% url 'evidence_detail' ev.pk %}"><span class="mono muted d-block">{{ ev.evidence_id }}</span>{{ ev.name }}</a>
+          <span class="chip chip-{{ ev.status }}">{{ ev.get_status_display }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty"><i class="bi bi-inbox"></i>Nothing is assigned to you.</div>
+      {% endif %}
+    </section>
+  </div>
+  <div class="col-md-6">
+    <section class="panel">
+      <div class="panel-head"><h2>Where evidence is</h2></div>
+      <div class="panel-body"><div style="max-width:320px;margin:auto;"><canvas id="chartStatus" aria-label="Evidence by status" role="img"></canvas></div></div>
+    </section>
+  </div>
+  <div class="col-md-6">
+    <section class="panel">
+      <div class="panel-head"><h2>What kind of evidence</h2></div>
+      <div class="panel-body"><canvas id="chartCategory" height="220" aria-label="Evidence by category" role="img"></canvas></div>
+    </section>
+  </div>
+</div>
+{{ chart_status|json_script:"chart-status" }}
+{{ chart_category|json_script:"chart-category" }}
+{% endblock %}
+{% block libs %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>{% endblock %}

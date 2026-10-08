@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Cases{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Cases</h1><p class="sub">Every piece of evidence belongs to a case.</p></div>
+  {% if can_write %}<a class="btn btn-tape" href="{% url 'case_create' %}"><i class="bi bi-folder-plus me-1"></i>New case</a>{% endif %}
+</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-12 col-md-6"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Search case number or title" aria-label="Search cases"></div>
+  <div class="col-8 col-md-3">
+    <select class="form-select" name="status" aria-label="Filter by status">
+      <option value="">All statuses</option>
+      {% for key, label in statuses %}<option value="{{ key }}" {% if key == status %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-4 col-md-3"><button class="btn btn-ink w-100" type="submit">Search</button></div>
+</form>
+<div class="panel">
+  {% if page %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead><tr><th class="ps-3">Case</th><th>Title</th><th>Status</th><th>Lead</th><th>Evidence</th></tr></thead>
+      <tbody>
+        {% for c in page %}
+        <tr>
+          <td class="ps-3 mono"><a href="{% url 'case_detail' c.pk %}">{{ c.case_number }}</a></td>
+          <td>{{ c.title }}</td>
+          <td><span class="chip chip-case-{{ c.status }}">{{ c.get_status_display }}</span></td>
+          <td>{% if c.lead %}{{ c.lead.get_full_name|default:c.lead.username }}{% else %}-{% endif %}</td>
+          <td>{{ c.evidence.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty"><i class="bi bi-folder2"></i>No cases match.</div>
+  {% endif %}
+</div>
+{% include "custody/_pager.html" %}
+{% endblock %}

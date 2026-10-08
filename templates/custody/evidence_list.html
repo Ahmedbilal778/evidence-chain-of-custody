@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Evidence{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Evidence</h1><p class="sub">Search by ID, name or case. Open an item to see its chain.</p></div>
+  {% if can_write %}<a class="btn btn-tape" href="{% url 'evidence_create' %}"><i class="bi bi-plus-lg me-1"></i>Log evidence</a>{% endif %}
+</div>
+<form class="row g-2 mb-4" method="get">
+  <div class="col-12 col-lg-5"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="EV-2026-0001, laptop, CS-2026-002" aria-label="Search evidence"></div>
+  <div class="col-6 col-lg-3">
+    <select class="form-select" name="status" aria-label="Filter by status">
+      <option value="">Any status</option>
+      {% for key, label in statuses %}<option value="{{ key }}" {% if key == status %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-lg-2">
+    <select class="form-select" name="category" aria-label="Filter by category">
+      <option value="">Any type</option>
+      {% for key, label in categories %}<option value="{{ key }}" {% if key == category %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-lg-2"><button class="btn btn-ink w-100" type="submit">Search</button></div>
+</form>
+<div class="row g-3">
+  {% for ev in page %}<div class="col-12 col-md-6 col-xl-4">{% include "custody/_ev_card.html" %}</div>
+  {% empty %}<div class="col-12"><div class="panel empty"><i class="bi bi-search"></i>No evidence matches these filters.</div></div>{% endfor %}
+</div>
+{% include "custody/_pager.html" %}
+{% endblock %}

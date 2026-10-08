@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    {% if subtitle %}<p class="sub">{{ subtitle }}</p>{% endif %}
+  </div>
+</div>
+<div class="panel" style="max-width: 860px;">
+  <div class="panel-body">
+    <form method="post" {% if multipart %}enctype="multipart/form-data"{% endif %}>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="row g-3">
+        {% for field in form %}
+        <div class="{% if field.name == 'description' or field.name == 'notes' %}col-12{% else %}col-md-6{% endif %}">
+          {% include "custody/_field.html" %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <button type="submit" class="btn btn-ink px-4">Save</button>
+        <a class="btn btn-line" href="{% if back_pk %}{% url back back_pk %}{% else %}{% url back %}{% endif %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

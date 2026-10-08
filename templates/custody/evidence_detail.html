@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ ev.evidence_id }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="small text-decoration-none" href="{% url 'evidence_list' %}"><i class="bi bi-arrow-left"></i> All evidence</a>
+    <p class="mono muted mb-1 mt-2">{{ ev.evidence_id }}</p>
+    <h1>{{ ev.name }}</h1>
+  </div>
+  <div class="d-flex flex-wrap gap-2 no-print">
+    <button type="button" id="verify-btn" class="btn btn-line" data-url="{% url 'evidence_verify' ev.pk %}"><i class="bi bi-shield-check me-1"></i>Verify chain</button>
+    <a class="btn btn-line" href="{% url 'evidence_report' ev.pk %}"><i class="bi bi-printer me-1"></i>Print report</a>
+    {% if can_write and not ev.is_closed %}<a class="btn btn-tape" href="{% url 'evidence_transfer' ev.pk %}"><i class="bi bi-arrow-left-right me-1"></i>Log custody event</a>{% endif %}
+  </div>
+</div>
+
+<div id="chain-banner" class="banner {% if chain_ok %}ok{% else %}bad{% endif %}" role="status">
+  <i class="bi {% if chain_ok %}bi-shield-check{% else %}bi-shield-exclamation{% endif %}"></i>
+  <div>
+    <strong>{% if chain_ok %}Chain intact{% else %}Chain broken{% endif %}</strong>
+    <span>{% if chain_ok %}All {{ items|length }} record{{ items|length|pluralize }} match their hashes.{% else %}Record {{ broken_at }} does not match its hash. Treat this item as compromised until reviewed.{% endif %}</span>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8 order-2 order-lg-1">
+    <section class="panel">
+      <div class="panel-head"><h2>Custody chain</h2><span class="muted small">{{ items|length }} record{{ items|length|pluralize }}</span></div>
+      <div class="panel-body">
+        <ol class="chain">
+          {% for log, ok in items %}
+          <li class="chain-item {% if ok %}is-ok{% else %}is-bad{% endif %}" id="link-{{ log.id }}">
+            <span class="node"><i class="bi {{ log.icon }}"></i></span>
+            <div class="block">
+              <div class="d-flex flex-wrap justify-content-between gap-1">
+                <h3>{{ log.get_action_display }}</h3>
+                <span class="when">{{ log.timestamp|date:"d M Y, H:i" }}</span>
+              </div>
+              <div class="who">
+                {% if log.from_user %}{{ log.from_user.get_full_name|default:log.from_user.username }} <i class="bi bi-arrow-right mx-1"></i>{% endif %}
+                {% if log.to_user %}<strong>{{ log.to_user.get_full_name|default:log.to_user.username }}</strong>{% else %}<span class="muted">custodian unchanged</span>{% endif %}
+              </div>
+              <div class="muted small"><i class="bi bi-geo-alt me-1"></i>{{ log.location }} &middot; recorded by {{ log.recorded_by.get_full_name|default:log.recorded_by.username }}</div>
+              <p class="notes">{{ log.notes }}</p>
+              <div class="hash-row">
+                <span>prev <b>{{ log.short_prev }}</b></span>
+                <span>hash <b>{{ log.short_hash }}</b><button type="button" class="copy-btn" data-copy="{{ log.hash }}" aria-label="Copy full hash"><i class="bi bi-clipboard"></i></button></span>
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-lg-4 order-1 order-lg-2">
+    <section class="panel mb-4">
+      <div class="panel-head"><h2>Details</h2><span class="chip chip-{{ ev.status }}">{{ ev.get_status_display }}</span></div>
+      <div class="panel-body">
+        <dl class="facts">
+          <div><dt>Case</dt><dd><a href="{% url 'case_detail' ev.case.pk %}">{{ ev.case.case_number }}</a> &middot; {{ ev.case.title }}</dd></div>
+          <div><dt>Type</dt><dd>{{ ev.get_category_display }}</dd></div>
+          <div><dt>Held by</dt><dd>{% if ev.current_custodian %}{{ ev.current_custodian.get_full_name|default:ev.current_custodian.username }}{% else %}Nobody{% endif %}</dd></div>
+          <div><dt>Stored at</dt><dd>{{ ev.current_location|default:"-" }}</dd></div>
+          <div><dt>Found at</dt><dd>{{ ev.location_found }}</dd></div>
+          <div><dt>Collected</dt><dd>{{ ev.collected_at|date:"d M Y, H:i" }} by {{ ev.collected_by.get_full_name|default:ev.collected_by.username }}</dd></div>
+          {% if ev.description %}<div><dt>Description</dt><dd>{{ ev.description|linebreaksbr }}</dd></div>{% endif %}
+          {% if ev.file %}
+          <div>
+            <dt>Attached file</dt>
+            <dd>
+              <a href="{{ ev.file.url }}" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i> {{ ev.file.name|cut:"evidence/" }}</a>
+              <div class="mono muted mt-1" style="word-break:break-all;">SHA-256 {{ ev.file_sha256 }}</div>
+              <div id="file-line" class="mt-2">
+                {% if file_ok %}<span class="chip chip-ok"><i class="bi bi-check2"></i>File matches stored hash</span>{% else %}<span class="chip chip-bad"><i class="bi bi-x"></i>File does not match stored hash</span>{% endif %}
+              </div>
+            </dd>
+          </div>
+          {% endif %}
+        </dl>
+      </div>
+    </section>
+    <section class="panel no-print">
+      <div class="panel-head"><h2>Scan to open</h2></div>
+      <div class="panel-body"><div class="qr-box"><div id="qr-code" data-url="{{ request.build_absolute_uri }}"></div></div>
+      <p class="muted small text-center mb-0">Print this on the evidence bag label.</p></div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block libs %}<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ case.case_number }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="small text-decoration-none" href="{% url 'case_list' %}"><i class="bi bi-arrow-left"></i> All cases</a>
+    <p class="mono muted mb-1 mt-2">{{ case.case_number }}</p>
+    <h1>{{ case.title }}</h1>
+  </div>
+  {% if can_write %}
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-line" href="{% url 'case_edit' case.pk %}"><i class="bi bi-pencil me-1"></i>Edit case</a>
+    {% if case.status != 'closed' %}<a class="btn btn-tape" href="{% url 'evidence_create' %}?case={{ case.pk }}"><i class="bi bi-plus-lg me-1"></i>Add evidence</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+<section class="panel mb-4">
+  <div class="panel-body">
+    <div class="row g-3">
+      <div class="col-6 col-md-3"><div class="muted small">Status</div><span class="chip chip-case-{{ case.status }}">{{ case.get_status_display }}</span></div>
+      <div class="col-6 col-md-3"><div class="muted small">Lead investigator</div>{% if case.lead %}{{ case.lead.get_full_name|default:case.lead.username }}{% else %}-{% endif %}</div>
+      <div class="col-6 col-md-3"><div class="muted small">Opened</div>{{ case.created_at|date:"d M Y" }}</div>
+      <div class="col-6 col-md-3"><div class="muted small">Evidence items</div>{{ items|length }}</div>
+    </div>
+    {% if case.description %}<hr><p class="mb-0">{{ case.description|linebreaksbr }}</p>{% endif %}
+  </div>
+</section>
+<h2 class="mb-3">Evidence in this case</h2>
+<div class="row g-3">
+  {% for ev in items %}<div class="col-12 col-md-6 col-xl-4">{% include "custody/_ev_card.html" %}</div>
+  {% empty %}<div class="col-12"><div class="panel empty"><i class="bi bi-archive"></i>No evidence logged for this case yet.</div></div>{% endfor %}
+</div>
+{% endblock %}

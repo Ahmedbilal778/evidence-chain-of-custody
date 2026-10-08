@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Report {{ ev.evidence_id }}{% endblock %}
+{% block content %}
+<div class="page-head no-print">
+  <div><h1>Custody report</h1><p class="sub">Print this page or save it as PDF from the print dialog.</p></div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-line" href="{% url 'evidence_detail' ev.pk %}">Back</a>
+    <button class="btn btn-ink" type="button" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+  </div>
+</div>
+<article class="report">
+  <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+    <div>
+      <h2 class="mb-0">Chain of custody record</h2>
+      <div class="muted">{{ ev.case.case_number }} &middot; {{ ev.case.title }}</div>
+    </div>
+    <div class="text-md-end"><div class="mono">{{ ev.evidence_id }}</div><div class="muted small">Generated {% now "d M Y, H:i" %}</div></div>
+  </div>
+  <div class="row g-3 mb-4">
+    <div class="col-md-6"><div class="muted small">Item</div><strong>{{ ev.name }}</strong> ({{ ev.get_category_display }})</div>
+    <div class="col-md-6"><div class="muted small">Found at</div>{{ ev.location_found }}</div>
+    <div class="col-md-6"><div class="muted small">Collected</div>{{ ev.collected_at|date:"d M Y, H:i" }} by {{ ev.collected_by.get_full_name|default:ev.collected_by.username }}</div>
+    <div class="col-md-6"><div class="muted small">Current status</div>{{ ev.get_status_display }}{% if ev.current_custodian %}, held by {{ ev.current_custodian.get_full_name|default:ev.current_custodian.username }}{% endif %}</div>
+    {% if ev.file %}<div class="col-12"><div class="muted small">Attached file SHA-256</div><span class="mono" style="word-break:break-all;">{{ ev.file_sha256 }}</span></div>{% endif %}
+  </div>
+  <p>
+    {% if chain_ok %}<span class="chip chip-ok"><i class="bi bi-shield-check"></i>Hash chain verified</span>{% else %}<span class="chip chip-bad"><i class="bi bi-shield-exclamation"></i>Hash chain broken</span>{% endif %}
+    {% if file_ok is True %}<span class="chip chip-ok ms-1">File hash matches</span>{% elif file_ok is False %}<span class="chip chip-bad ms-1">File hash mismatch</span>{% endif %}
+  </p>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle" style="font-size:0.85rem;">
+      <thead><tr><th>#</th><th>Date and time</th><th>Action</th><th>From</th><th>To</th><th>Location</th><th>Notes</th><th>Hash</th></tr></thead>
+      <tbody>
+        {% for log, ok in items %}
+        <tr {% if not ok %}class="table-danger"{% endif %}>
+          <td>{{ forloop.counter }}</td>
+          <td class="text-nowrap">{{ log.timestamp|date:"d M Y H:i" }}</td>
+          <td>{{ log.get_action_display }}</td>
+          <td>{% if log.from_user %}{{ log.from_user.get_full_name|default:log.from_user.username }}{% else %}-{% endif %}</td>
+          <td>{% if log.to_user %}{{ log.to_user.get_full_name|default:log.to_user.username }}{% else %}-{% endif %}</td>
+          <td>{{ log.location }}</td>
+          <td>{{ log.notes }}</td>
+          <td class="mono" style="word-break:break-all;">{{ log.short_hash }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="row g-4">
+    <div class="col-6"><div class="sign-line">Releasing officer: name, signature, date</div></div>
+    <div class="col-6"><div class="sign-line">Receiving officer: name, signature, date</div></div>
+  </div>
+</article>
+{% endblock %}

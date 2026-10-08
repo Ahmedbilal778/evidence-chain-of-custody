@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block guest %}
+<div class="auth">
+  <section class="auth-art">
+    <div class="tape"></div>
+    <div class="mt-3">
+      <div class="d-flex align-items-center gap-2"><span class="brand-mark"><i class="bi bi-link-45deg"></i></span><span class="brand-name fs-3">CustodyChain</span></div>
+      <h1>Every hand-over, on the record.</h1>
+      <p>Log evidence, pass it between people, and let the hash chain show if any record was altered.</p>
+    </div>
+    <div class="links" aria-hidden="true">
+      <span class="lk" style="--i:0"></span><span class="lk" style="--i:1"></span><span class="lk" style="--i:2"></span><span class="lk" style="--i:3"></span><span class="lk" style="--i:4"></span><span class="lk" style="--i:5"></span><span class="lk" style="--i:6"></span><span class="lk" style="--i:7"></span><span class="lk" style="--i:8"></span><span class="lk" style="--i:9"></span>
+    </div>
+  </section>
+  <section class="auth-form">
+    <div class="tag-card">
+    <span class="tag-id">TAG-0001</span>
+    <form method="post">
+      {% csrf_token %}
+      <h2 class="mb-1">Sign in</h2>
+      <p class="muted mb-4">Use the account your administrator created.</p>
+      {% if form.errors %}<div class="alert alert-danger">Username or password is wrong. Try again.</div>{% endif %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="mb-3">
+        <label class="form-label" for="id_username">Username</label>
+        <input class="form-control" type="text" name="username" id="id_username" value="{{ form.username.value|default:'' }}" autocomplete="username" autofocus required>
+      </div>
+      <div class="mb-4">
+        <label class="form-label" for="id_password">Password</label>
+        <input class="form-control" type="password" name="password" id="id_password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-ink w-100 py-2" type="submit">Sign in</button>
+    </form>
+    </div>
+  </section>
+</div>
+{% endblock %}

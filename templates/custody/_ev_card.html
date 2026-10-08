@@ -1,0 +1,13 @@
+<a class="ev-card s-{{ ev.status }}" href="{% url 'evidence_detail' ev.pk %}">
+  <div class="head">
+    <span class="ev-ic"><i class="bi {{ ev.icon }}"></i></span>
+    <span class="chip chip-{{ ev.status }}">{{ ev.get_status_display }}</span>
+  </div>
+  <div class="mono muted mt-3">{{ ev.evidence_id }}</div>
+  <h3>{{ ev.name }}</h3>
+  <div class="muted small">{{ ev.get_category_display }} &middot; {{ ev.case.case_number }}</div>
+  <div class="ev-meta">
+    <span><i class="bi bi-person"></i>{% if ev.current_custodian %}{{ ev.current_custodian.get_full_name|default:ev.current_custodian.username }}{% else %}No custodian{% endif %}</span>
+    <span><i class="bi bi-geo-alt"></i>{{ ev.current_location|default:ev.location_found }}</span>
+  </div>
+</a>
